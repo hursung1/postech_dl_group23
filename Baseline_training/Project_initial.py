@@ -34,15 +34,15 @@ train_loader = DataLoader(Rev_train,batch_size = 7, shuffle = True)
 ## Configuring the BERT model
 
 #device = torch.device("cuda")
-total_label = 5
-tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-model = BertForSequenceClassification.from_pretrained('bert-base-cased',num_labels= total_label)
+total_label = 5                                                                                          # In csv file, there are 5 categories
+tokenizer = BertTokenizer.from_pretrained('bert-base-cased')                                             # Various pretrained BERT model, https://medium.com/huggingface/multi-label-text-classification-using-bert-the-mighty-transformer-69714fa3fb3d
+model = BertForSequenceClassification.from_pretrained('bert-base-cased',num_labels= total_label)         # For multi-classification
 
 #model.to(device)
 optimizer = Adam(model.parameters(),lr=1e-6)
 
 iter = 1
-check_iter = 500
+check_iter = 10
 epochs = 1
 total_loss = 0
 total_len = 0
