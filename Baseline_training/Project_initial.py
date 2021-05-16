@@ -1,4 +1,3 @@
-
 import torch
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
@@ -22,14 +21,24 @@ class ReviewDataset(Dataset):
 
 
 ### Initial code of BERT
+## parameter 
+Batch_size = 7
+Valid_size = 1000
+
+Pad_size = 35
+
 ## Load data set
 train_data = pd.read_csv('./sentence-classification/train_final.csv')
-train_data.dropna(inplace=True)
-#train_data = train_data.sample(frac = 0.3)
+train_data, val_data = train_data[Valid_size:], train_data[:Valid_size]
+
 
 
 Rev_train = ReviewDataset(train_data)
-train_loader = DataLoader(Rev_train,batch_size = 7, shuffle = True)
+Rev_valid = ReviewDataset(val_data)
+train_loader = DataLoader(Rev_train,batch_size = Batch_size, shuffle = True)
+valid_loader = DataLoader(Rev_valid,batch_size = Batch_size, shuffle = False)
+
+
 
 ## Configuring the BERT model
 
@@ -54,8 +63,9 @@ for epoch in range(epochs):
 
     for Label,Sentence in train_loader:
         optimizer.zero_grad()
-
-        encoded_list = [tokenizer.encode(t, add_special_tokens=True) for t in Sentence]
+            ## Bert Tokenizer encoding => [CLS] , Token1, Token2,... ,Token N, [SEP] => if max_length = 35, then N=33
+        encoded_list = [tokenizer.encode(t, add_special_tokens=True, max_length = Pad_size) for t in Sentence]
+        
         padded_list =  [e + [0] * (512-len(e)) for e in encoded_list]
     
         sample = torch.LongTensor(padded_list)
@@ -83,3 +93,25 @@ for epoch in range(epochs):
             total_len = 0
             total_correct = 0
     iter = iter +1
+
+# evaluation
+
+model.eval()
+
+total_loss = 0
+total_len = 0
+total_correct = 0
+for Label,Sentence in valid_loader:
+    encoded_list = [tokenizer.encode(t, add_special_tokens=True, max_length = Pad_size) for t in Sentence]
+    padded_list =  [e + [0] * (512-len(e)) for e in encoded_list]
+    sample = torch.LongTensor(padded_list)
+    Labels = torch.LongTensor(Label)    
+    outputs = model(sample, labels=Labels)
+
+    logits = outputs[1]
+    prediction = torch.argmax(F.softmax(logits), dim=1)
+    correct = prediction.eq(Labels)
+    total_correct += correct.sum().item()
+    total_len += len(Labels)
+
+print('Validation Accuracy :', total_correct / total_len)

@@ -1,3 +1,11 @@
 {
-    "python.pythonPath": "C:\\Users\\LHW\\Anaconda3\\envs\\torch\\python.exe"
+    "workbench.editorAssociations": [
+        {
+            "viewType": "jupyter.notebook.ipynb",
+            "filenamePattern": "*.ipynb"
+        }
+    ],
+    "python.pythonPath": "C:\\Users\\LHW\\Anaconda3\\envs\\torch\\python.exe",
+    "python.linting.pylintPath": "C:\\Users\\LHW\\Anaconda3\\pkgs\\pylint-2.4.4-py37_0\\pylint"
+    
 }
