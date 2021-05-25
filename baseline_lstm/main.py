@@ -11,10 +11,11 @@ import os
 import train
 from data import SentimentDataset 
 from model import SentimentClassificationModel
+from config import get_params
 
 EPOCH = 10
 batch_size = 64
-emb_dim = 100
+emb_dim = 300
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def main(params):
@@ -22,28 +23,33 @@ def main(params):
     train_data = pd.read_csv('./data/train_final.csv')
     tokenizer = get_tokenizer('spacy', language='en')
 
-    # embedding = CharNGram()
-    # embedding = FastText()
-    # embedding = GloVe() # use glove embedding with default option(name='840B', dim=300)
-    embedding = GloVe(name='6B', dim=str(emb_dim))
+    if params.emb_type == "GloVe":
+        embedding = GloVe(name=params.emb_data, dim=params.emb_dim) # use glove embedding with default option(name='840B', dim=300)
+    elif params.emb_type == "CharNGram":
+        embedding = CharNGram()
+    elif params.emb_type == "FastText":
+        embedding = FastText(name=params.emb_data, dim=params.emb_dim)
+    else:
+        print("Wrong embedding type")
+        exit()
 
-    train_data, val_data = train_data[500:], train_data[:500]
+    train_data, val_data = train_data[1000:], train_data[:1000]
     train_dataset = SentimentDataset(train_data, tokenizer, embedding)
     val_dataset = SentimentDataset(val_data, tokenizer, embedding)
     
     train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
     val_dataloader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=False)
 
-    model = SentimentClassificationModel(emb_dim, 256, 0.3).to(device)
+    model = SentimentClassificationModel(params.emb_dim, params.hidden_dim, params.dropout).to(device)
     crit = nn.CrossEntropyLoss().to(device)
-    optim = torch.optim.Adam(params=model.parameters(), lr=5e-3)
+    optim = torch.optim.Adam(params=model.parameters(), lr=1e-3)
 
     best_val_acc = 0
     early_stop_cnt = 0
     epoch = 0
     while early_stop_cnt != 5:
         train.trainer(epoch, model, train_dataloader, crit, optim, device)
-        val_acc = train.eval(epoch, model, val_dataloader, device)
+        val_acc = train.eval(epoch, model, val_dataloader, device, False)
         if val_acc > best_val_acc and epoch > 0:
             torch.save(model.state_dict(), './model/lstm_best.pt')
             best_val_acc = val_acc
@@ -54,26 +60,34 @@ def main(params):
 
     print("Early stopping condition satisfied")
 
+
 def test(params):
     tokenizer = get_tokenizer('spacy', language='en')
-    embedding = GloVe(name='6B', dim=str(emb_dim))
+    embedding = GloVe(name=params.emb_data, dim=params.emb_dim)
 
     test_data = pd.read_csv('./data/eval_final_open.csv')
-    test_dataset = SentimentDataset(test_data, tokenizer, embedding, True)
+    test_dataset = SentimentDataset(test_data, tokenizer, embedding, False)
     test_dataloader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
     
-    model = SentimentClassificationModel(emb_dim, 256, 0.3).to(device)
+    model = SentimentClassificationModel(params.emb_dim, params.hidden_dim, 0.3).to(device)
     model.load_state_dict(torch.load('./model/lstm_best.pt'))
 
-    train.eval(0, model, test_dataloader, device)
+    inference = {'Id': [i for i in range(len(test_data))]}
+    inference['Category'] = train.eval(0, model, test_dataloader, device, True)
+
+    df = pd.DataFrame(inference)
+    df.to_csv("./data/out.csv", index=False)
 
 
 if __name__ == "__main__":
+    params = get_params()
+
     if not os.path.isdir("./data"):
         os.mkdir("./data")
 
-    if True:
-        main(None)
+    print(params.is_train)
+    if params.is_train:
+        main(params)
 
     else:
-        test(None)
+        test(params)

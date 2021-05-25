@@ -16,11 +16,7 @@ class SentimentDataset(Dataset):
 
     def __getitem__(self, index):
         x = self.tokenizer(self.data.iloc[index]['Sentence'])
-        if self.is_train:
-            y = self.data.iloc[index]['Category']
-        else: 
-            y = None
-
+        
         # pad sentence data
         for _ in range(len(x), PAD_SIZE):
             x.append('<pad>')
@@ -29,4 +25,8 @@ class SentimentDataset(Dataset):
         x = x[:PAD_SIZE] 
         x = self.embedding.get_vecs_by_tokens(x)
 
-        return x, y
+        if self.is_train:
+            y = self.data.iloc[index]['Category']
+            return x, y
+        else: 
+            return x
