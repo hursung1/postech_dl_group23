@@ -23,23 +23,23 @@ num_labels = 5
 pad_size = 35
 batch_size = 2
 Valid_size = 1000
-epochs = 10
+epochs = 7
 seed_fix = True
 Training =  False
 
-Test_epoch = 10
+Test_epoch = 9
 learning_rate = 2e-5
 
 
-Model_version = "" #For fine tuning  ex) cased_v1, uncased_v2 ...
-Save_version = ""  #v1, v2 ...
+Model_version = "_Test" #For fine tuning  ex) cased_v1, uncased_v2 ...
+Save_version = "_Test"  #v1, v2 ...
 Pretrained_model ='bert-base-uncased'       ## pretrained model
-Load_Path = "./Trained_model/entier_model_test_uncased_epoch%d.pt" % Test_epoch
+Load_Path = "./Trained_model/entier_model_test_uncased_epoch%d" % Test_epoch
 
-save_file_name = "./Results/submission_epoch%d.csv" % Test_epoch
+save_file_name = "./Results/submission_epoch%d" % Test_epoch
 
-save_file_name = save_file_name+Save_version
-Load_Path = Load_Path + Model_version
+save_file_name = save_file_name+Save_version + ".csv"
+Load_Path = Load_Path + Model_version + ".pt"
 
 Reveiw_data =  pd.read_csv('./sentence-classification/train_final.csv')
 
@@ -63,9 +63,12 @@ attention_masks = torch.cat(attention_masks, dim=0)
 labels = torch.tensor(labels)
 
 
-train_data_ids, valid_data_ids= input_ids[Valid_size:], input_ids[:Valid_size]
-train_data_masks, valid_data_masks= attention_masks[Valid_size:], attention_masks[:Valid_size]
-train_data_lables, valid_data_labels= labels[Valid_size:], labels[:Valid_size]
+#train_data_ids, valid_data_ids= input_ids[Valid_size:], input_ids[:Valid_size]
+train_data_ids, valid_data_ids= input_ids, input_ids[:Valid_size]
+#train_data_masks, valid_data_masks= attention_masks[Valid_size:], attention_masks[:Valid_size]
+train_data_masks, valid_data_masks= attention_masks, attention_masks[:Valid_size]
+#train_data_lables, valid_data_labels= labels[Valid_size:], labels[:Valid_size]
+train_data_lables, valid_data_labels= labels, labels[:Valid_size]
 
 train_dataset = TensorDataset(train_data_ids, train_data_masks, train_data_lables)
 valid_dataset =  TensorDataset(valid_data_ids, valid_data_masks, valid_data_labels)
@@ -163,8 +166,8 @@ if Training:
         
        
         print("Validation Loss: {0:.4f}".format(avg_val_loss))
-        Save_Path = "./Trained_model/entier_model_test_uncased_epoch%d.pt" %(epoch+1)
-        Save_Path = Save_Path +Model_version
+        Save_Path = "./Trained_model/entier_model_test_uncased_epoch%d" %(epoch+1)
+        Save_Path = Save_Path +Model_version + ".pt"
 
         torch.save(model,Save_Path)
         print("Model saved")
