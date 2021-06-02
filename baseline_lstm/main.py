@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import GloVe, FastText, CharNGram
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
@@ -17,6 +18,16 @@ EPOCH = 10
 batch_size = 64
 emb_dim = 300
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+def plotting(title, xlabel, ylabel, data, dpi=500):
+    plt.figure()
+    plt.title(title)
+    plt.plot(data)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.savefig(f"{title}.png", dpi=dpi)
+    plt.close()
+
 
 def main(params):
     # build dataset
@@ -47,8 +58,11 @@ def main(params):
     best_val_acc = 0
     early_stop_cnt = 0
     epoch = 0
+    train_loss_list = []
+    train_acc_list = []
+    val_acc_list = []
     while early_stop_cnt != 5:
-        train.trainer(epoch, model, train_dataloader, crit, optim, device)
+        loss_list, train_acc = train.trainer(epoch, model, train_dataloader, crit, optim, device)
         val_acc = train.eval(epoch, model, val_dataloader, device, False)
         if val_acc > best_val_acc and epoch > 0:
             torch.save(model.state_dict(), './model/lstm_best.pt')
@@ -57,9 +71,14 @@ def main(params):
         
         early_stop_cnt += 1
         epoch += 1
+        train_loss_list.extend(loss_list)
+        train_acc_list.append(train_acc)
+        val_acc_list.append(val_acc)
 
     print("Early stopping condition satisfied")
-
+    plotting("train_loss", "steps", "loss", train_loss_list)
+    plotting("train_accuracy", "epoch", "accuracy", train_acc_list)
+    plotting('validation_accuracy', "epoch", "accuracy", val_acc_list)
 
 def test(params):
     tokenizer = get_tokenizer('spacy', language='en')
@@ -85,7 +104,7 @@ if __name__ == "__main__":
     if not os.path.isdir("./data"):
         os.mkdir("./data")
 
-    print(params.is_train)
+    params.is_train = bool(params.is_train)
     if params.is_train:
         main(params)
 

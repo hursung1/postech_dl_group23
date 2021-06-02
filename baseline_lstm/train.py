@@ -6,6 +6,7 @@ def trainer(epoch, model, dataloader, crit, optim, device):
     pbar = tqdm(dataloader, total=len(dataloader))
     total = 0
     correct = 0
+    loss_all = []
     for (x, y) in pbar:
         optim.zero_grad()
         x = x.to(device)
@@ -14,8 +15,9 @@ def trainer(epoch, model, dataloader, crit, optim, device):
         if len(x.size()) == 4: # CharNgram
             x.squeeze_(2)
 
-        out, last_hidden = model(x)
+        out = model(x)
         loss = crit(out, y)
+        loss_all.append(loss.item())
         loss.backward()
         optim.step()
 
@@ -36,6 +38,8 @@ def trainer(epoch, model, dataloader, crit, optim, device):
         # optim.step()
 
         pbar.set_description(f"EPOCH {epoch+1} Training Loss: {loss.item():.4f} ACC: {correct/total:.4f}")
+    
+    return loss_all, correct / total
 
 
 def eval(epoch, model, dataloader, device, is_test):

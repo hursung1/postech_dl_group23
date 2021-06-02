@@ -10,10 +10,5 @@ class SentimentClassificationModel(nn.Module):
     def forward(self, x):
         out, _ = self.lstm_layer(x)
         hidden = self.dropout(out[:, -1, :])
-        print(out.shape, hidden.shape)
         out = self.linear_layer(hidden)
-        return out, hidden
-
-    def linear_forward(self, h):
-        out = self.linear_layer(h)
         return out
