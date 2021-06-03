@@ -3,11 +3,15 @@
 210509 Update the training base code
         -Due to the limitations of the lab computer, I confirmed that it runs without errors, but I haven't finished training.
 
-##In CNN_classificaition folder, there is code file named 'CNN_classification.ipynb', which is written by ipython notebook.
+In CNN_classificaition folder, there is code file named 'CNN_classification.ipynb', which is written by ipython notebook.
 To run it, set data file of 'train_final.csv' and 'eval_final_open.csv' in the same folder.
 After running, data file of 'sub_label.csv' that has infromation of label of test dataset.
 
-##In RoBERTa_classification folder, there is code file named 'RoBERTa_classification.py'.
+
+======================
+
+
+In RoBERTa_classification folder, there is code file named 'RoBERTa_classification.py'.
 There are 4 models, model, model_a, model_b, model_c.
 
 model is standard model for real label outputs {0, 1, 2, 3, 4}
